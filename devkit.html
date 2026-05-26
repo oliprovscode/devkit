@@ -1,1 +1,747 @@
-<!-- devkit — see README for details -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>devkit — Developer Utilities</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+  --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+  --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+  --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+  --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem;
+  --space-4: 1rem; --space-5: 1.25rem; --space-6: 1.5rem;
+  --space-8: 2rem; --space-10: 2.5rem; --space-12: 3rem;
+  --radius-sm: 0.375rem; --radius-md: 0.5rem;
+  --radius-lg: 0.75rem; --radius-xl: 1rem;
+  --radius-full: 9999px;
+  --transition: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+:root, [data-theme="light"] {
+  --bg: #f7f6f2; --surface: #f9f8f5; --surface-2: #fbfbf9;
+  --surface-offset: #f3f0ec; --surface-dynamic: #e6e4df;
+  --divider: #dcd9d5; --border: #d4d1ca;
+  --text: #28251d; --text-muted: #7a7974; --text-faint: #bab9b4;
+  --primary: #01696f; --primary-hover: #0c4e54; --primary-hl: #cedcd8;
+  --error: #a12c7b; --success: #437a22;
+  --shadow-sm: 0 1px 2px oklch(0.2 0.01 80 / 0.06);
+  --shadow-md: 0 4px 12px oklch(0.2 0.01 80 / 0.08);
+}
+[data-theme="dark"] {
+  --bg: #171614; --surface: #1c1b19; --surface-2: #201f1d;
+  --surface-offset: #1d1c1a; --surface-dynamic: #2d2c2a;
+  --divider: #262523; --border: #393836;
+  --text: #cdccca; --text-muted: #797876; --text-faint: #5a5957;
+  --primary: #4f98a3; --primary-hover: #227f8b; --primary-hl: #313b3b;
+  --error: #d163a7; --success: #6daa45;
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.2);
+  --shadow-md: 0 4px 12px oklch(0 0 0 / 0.3);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+body { min-height: 100dvh; font-family: var(--font-body); font-size: var(--text-base); color: var(--text); background: var(--bg); display: flex; flex-direction: column; }
+button { cursor: pointer; background: none; border: none; font: inherit; color: inherit; }
+input, textarea, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: var(--radius-sm); }
+
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: var(--shadow-sm);
+}
+.logo { display: flex; align-items: center; gap: var(--space-3); font-weight: 600; font-size: var(--text-base); letter-spacing: -0.01em; }
+.logo svg { color: var(--primary); }
+.theme-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-md); color: var(--text-muted); transition: background var(--transition), color var(--transition); }
+.theme-btn:hover { background: var(--surface-offset); color: var(--text); }
+
+.app { display: flex; flex: 1; }
+nav {
+  width: 220px; flex-shrink: 0;
+  background: var(--surface); border-right: 1px solid var(--border);
+  padding: var(--space-4) 0;
+  position: sticky; top: 57px; height: calc(100dvh - 57px); overflow-y: auto;
+}
+nav button {
+  width: 100%; text-align: left;
+  padding: var(--space-2) var(--space-6);
+  font-size: var(--text-sm); color: var(--text-muted);
+  border-radius: 0;
+  transition: background var(--transition), color var(--transition);
+}
+nav button:hover { background: var(--surface-offset); color: var(--text); }
+nav button.active { background: var(--primary-hl); color: var(--primary); font-weight: 500; }
+nav .nav-label { font-size: var(--text-xs); color: var(--text-faint); padding: var(--space-4) var(--space-6) var(--space-2); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; }
+
+main { flex: 1; padding: var(--space-8); max-width: 900px; }
+
+.tool { display: none; }
+.tool.active { display: block; }
+.tool-header { margin-bottom: var(--space-6); }
+.tool-header h1 { font-size: var(--text-xl); font-weight: 600; letter-spacing: -0.02em; color: var(--text); line-height: 1.15; }
+.tool-header p { color: var(--text-muted); font-size: var(--text-sm); margin-top: var(--space-2); }
+
+label { display: block; font-size: var(--text-sm); font-weight: 500; color: var(--text-muted); margin-bottom: var(--space-2); }
+textarea, input[type="text"], input[type="number"], select {
+  width: 100%; padding: var(--space-3) var(--space-4);
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius-md); color: var(--text);
+  font-family: var(--font-mono); font-size: var(--text-sm);
+  resize: vertical;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+textarea:focus, input:focus, select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px oklch(from var(--primary) l c h / 0.15);
+  outline: none;
+}
+textarea { min-height: 120px; }
+select { font-family: var(--font-body); resize: none; cursor: pointer; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm); font-weight: 500;
+  border-radius: var(--radius-md);
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-ghost { border: 1px solid var(--border); color: var(--text-muted); background: transparent; }
+.btn-ghost:hover { background: var(--surface-offset); color: var(--text); border-color: var(--text-muted); }
+.btn-row { display: flex; gap: var(--space-3); flex-wrap: wrap; margin: var(--space-4) 0; }
+
+.output {
+  background: var(--surface-offset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  font-family: var(--font-mono); font-size: var(--text-sm);
+  white-space: pre-wrap; word-break: break-all;
+  color: var(--text); min-height: 60px;
+  overflow-x: auto; margin-top: var(--space-4);
+}
+.output.error { color: var(--error); border-color: var(--error); }
+.output.success { color: var(--success); }
+
+.field { margin-bottom: var(--space-5); }
+.row { display: flex; gap: var(--space-4); }
+.row > * { flex: 1; }
+
+.copy-btn {
+  font-size: var(--text-xs); padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full); border: 1px solid var(--border);
+  color: var(--text-muted); background: var(--surface);
+  transition: background var(--transition), color var(--transition);
+}
+.copy-btn:hover { background: var(--surface-offset); color: var(--text); }
+.copy-btn.copied { color: var(--success); border-color: var(--success); }
+.output-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2); }
+.output-header label { margin: 0; }
+
+.jwt-part { margin-bottom: var(--space-4); }
+.jwt-part h3 { font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); margin-bottom: var(--space-2); text-transform: uppercase; letter-spacing: 0.06em; }
+.jwt-expiry { padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); font-size: var(--text-sm); font-weight: 500; margin-top: var(--space-4); }
+.jwt-expiry.valid { background: oklch(from var(--success) l c h / 0.12); color: var(--success); }
+.jwt-expiry.expired { background: oklch(from var(--error) l c h / 0.12); color: var(--error); }
+
+.diff-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.diff-output { font-family: var(--font-mono); font-size: var(--text-xs); background: var(--surface-offset); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: auto; max-height: 400px; }
+.diff-line { padding: var(--space-1) var(--space-4); white-space: pre; }
+.diff-line.added { background: oklch(from var(--success) l c h / 0.10); color: var(--success); }
+.diff-line.removed { background: oklch(from var(--error) l c h / 0.10); color: var(--error); }
+.diff-line.unchanged { color: var(--text-muted); }
+
+.color-preview { width: 100%; height: 80px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: var(--space-4); transition: background var(--transition); }
+.color-values { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--space-3); }
+.color-value-item { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3); }
+.color-value-item label { font-size: var(--text-xs); margin-bottom: var(--space-1); }
+.color-value-item input { font-family: var(--font-mono); font-size: var(--text-xs); background: transparent; border: none; width: 100%; padding: 0; }
+.color-value-item input:focus { outline: none; }
+
+.hash-opts { display: flex; gap: var(--space-4); margin: var(--space-3) 0; }
+.hash-opts label { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); cursor: pointer; margin: 0; }
+.hash-opts input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--primary); }
+
+.regex-match { background: oklch(from var(--primary) l c h / 0.2); border-radius: 2px; }
+.regex-input-row { display: flex; gap: var(--space-3); align-items: flex-end; }
+.regex-input-row > div { flex: 1; }
+.regex-input-row > div:last-child { flex: 0 0 80px; }
+.regex-matches { font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-2); }
+
+.uuid-list { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-4); }
+.uuid-item { display: flex; align-items: center; justify-content: space-between; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-family: var(--font-mono); font-size: var(--text-sm); }
+
+.nav-toggle { display: none; width: 36px; height: 36px; align-items: center; justify-content: center; border-radius: var(--radius-md); color: var(--text-muted); }
+@media (max-width: 700px) {
+  nav { position: fixed; left: -220px; top: 57px; height: calc(100dvh - 57px); z-index: 200; transition: left var(--transition); box-shadow: var(--shadow-md); }
+  nav.open { left: 0; }
+  .nav-toggle { display: flex; }
+  main { padding: var(--space-4); }
+  .diff-row { grid-template-columns: 1fr; }
+  .row { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="devkit logo">
+      <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+    </svg>
+    devkit
+  </div>
+  <div style="display:flex;gap:var(--space-2)">
+    <button class="nav-toggle theme-btn" aria-label="Toggle navigation" onclick="document.querySelector('nav').classList.toggle('open')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <button class="theme-btn" data-theme-toggle aria-label="Toggle dark mode">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="app">
+  <nav id="nav">
+    <div class="nav-label">Tools</div>
+    <button class="active" onclick="switchTool('jwt', this)">JWT Decoder</button>
+    <button onclick="switchTool('base64', this)">Base64</button>
+    <button onclick="switchTool('url', this)">URL Encode</button>
+    <button onclick="switchTool('hash', this)">Hash (SHA)</button>
+    <button onclick="switchTool('json', this)">JSON Formatter</button>
+    <button onclick="switchTool('diff', this)">Text Diff</button>
+    <button onclick="switchTool('uuid', this)">UUID Generator</button>
+    <button onclick="switchTool('regex', this)">Regex Tester</button>
+    <button onclick="switchTool('color', this)">Color Converter</button>
+  </nav>
+
+  <main>
+    <!-- JWT Decoder -->
+    <div class="tool active" id="tool-jwt">
+      <div class="tool-header">
+        <h1>JWT Decoder</h1>
+        <p>Paste a JWT token to decode its header and payload, and check expiry.</p>
+      </div>
+      <div class="field">
+        <label for="jwt-input">JWT Token</label>
+        <textarea id="jwt-input" rows="4" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." oninput="decodeJWT()"></textarea>
+      </div>
+      <div id="jwt-output" style="display:none">
+        <div class="jwt-part">
+          <h3>Header</h3>
+          <div class="output" id="jwt-header"></div>
+        </div>
+        <div class="jwt-part">
+          <h3>Payload</h3>
+          <div class="output" id="jwt-payload"></div>
+        </div>
+        <div id="jwt-expiry-box"></div>
+      </div>
+      <div class="output error" id="jwt-error" style="display:none"></div>
+    </div>
+
+    <!-- Base64 -->
+    <div class="tool" id="tool-base64">
+      <div class="tool-header">
+        <h1>Base64</h1>
+        <p>Encode plain text to Base64 or decode Base64 back to text.</p>
+      </div>
+      <div class="field">
+        <label for="b64-input">Input</label>
+        <textarea id="b64-input" rows="5" placeholder="Enter text or Base64..."></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="b64encode()">Encode</button>
+        <button class="btn btn-ghost" onclick="b64decode()">Decode</button>
+        <button class="btn btn-ghost" onclick="swapB64()">Swap</button>
+        <button class="btn btn-ghost" onclick="clearTool('b64-input','b64-output')">Clear</button>
+      </div>
+      <div class="output-header">
+        <label>Output</label>
+        <button class="copy-btn" onclick="copyOutput('b64-output', this)">Copy</button>
+      </div>
+      <div class="output" id="b64-output"></div>
+    </div>
+
+    <!-- URL Encode -->
+    <div class="tool" id="tool-url">
+      <div class="tool-header">
+        <h1>URL Encode / Decode</h1>
+        <p>Encode or decode URL components.</p>
+      </div>
+      <div class="field">
+        <label for="url-input">Input</label>
+        <textarea id="url-input" rows="5" placeholder="https://example.com/path?q=hello world&lang=en"></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="urlEncode()">Encode</button>
+        <button class="btn btn-ghost" onclick="urlDecode()">Decode</button>
+        <button class="btn btn-ghost" onclick="swapURL()">Swap</button>
+        <button class="btn btn-ghost" onclick="clearTool('url-input','url-output')">Clear</button>
+      </div>
+      <div class="output-header">
+        <label>Output</label>
+        <button class="copy-btn" onclick="copyOutput('url-output', this)">Copy</button>
+      </div>
+      <div class="output" id="url-output"></div>
+    </div>
+
+    <!-- Hash -->
+    <div class="tool" id="tool-hash">
+      <div class="tool-header">
+        <h1>Hash Generator (SHA)</h1>
+        <p>Generate SHA-256, SHA-384, or SHA-512 hashes using the Web Crypto API.</p>
+      </div>
+      <div class="field">
+        <label for="hash-input">Input</label>
+        <textarea id="hash-input" rows="5" placeholder="Enter text to hash..."></textarea>
+      </div>
+      <div class="hash-opts">
+        <label><input type="checkbox" id="hash-256" checked onchange="runHash()"> SHA-256</label>
+        <label><input type="checkbox" id="hash-384" onchange="runHash()"> SHA-384</label>
+        <label><input type="checkbox" id="hash-512" onchange="runHash()"> SHA-512</label>
+      </div>
+      <div id="hash-results"></div>
+    </div>
+
+    <!-- JSON -->
+    <div class="tool" id="tool-json">
+      <div class="tool-header">
+        <h1>JSON Formatter</h1>
+        <p>Format, validate, and minify JSON.</p>
+      </div>
+      <div class="field">
+        <label for="json-input">JSON Input</label>
+        <textarea id="json-input" rows="10" placeholder='{"key": "value"}' oninput="liveValidateJSON()"></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="formatJSON()">Format</button>
+        <button class="btn btn-ghost" onclick="minifyJSON()">Minify</button>
+        <button class="btn btn-ghost" onclick="clearTool('json-input','json-output')">Clear</button>
+      </div>
+      <div class="output-header">
+        <label>Output</label>
+        <button class="copy-btn" onclick="copyOutput('json-output', this)">Copy</button>
+      </div>
+      <div class="output" id="json-output"></div>
+    </div>
+
+    <!-- Text Diff -->
+    <div class="tool" id="tool-diff">
+      <div class="tool-header">
+        <h1>Text Diff</h1>
+        <p>Line-by-line diff between two text blocks using LCS algorithm.</p>
+      </div>
+      <div class="diff-row field">
+        <div>
+          <label for="diff-a">Original</label>
+          <textarea id="diff-a" rows="8" placeholder="Original text..."></textarea>
+        </div>
+        <div>
+          <label for="diff-b">Modified</label>
+          <textarea id="diff-b" rows="8" placeholder="Modified text..."></textarea>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="runDiff()">Compare</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('diff-a').value='';document.getElementById('diff-b').value='';document.getElementById('diff-output').innerHTML=''">Clear</button>
+      </div>
+      <div class="output" id="diff-output" style="padding:0;background:var(--surface-offset);overflow:auto;max-height:400px;font-family:var(--font-mono);font-size:var(--text-xs);"></div>
+    </div>
+
+    <!-- UUID -->
+    <div class="tool" id="tool-uuid">
+      <div class="tool-header">
+        <h1>UUID Generator</h1>
+        <p>Generate random v4 or time-ordered v7 UUIDs.</p>
+      </div>
+      <div class="row field">
+        <div>
+          <label for="uuid-type">Version</label>
+          <select id="uuid-type">
+            <option value="v4">v4 — Random</option>
+            <option value="v7">v7 — Time-ordered</option>
+          </select>
+        </div>
+        <div>
+          <label for="uuid-count">Count</label>
+          <input type="number" id="uuid-count" value="5" min="1" max="50">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateUUIDs()">Generate</button>
+        <button class="btn btn-ghost" onclick="copyAllUUIDs()">Copy All</button>
+      </div>
+      <div class="uuid-list" id="uuid-list"></div>
+    </div>
+
+    <!-- Regex -->
+    <div class="tool" id="tool-regex">
+      <div class="tool-header">
+        <h1>Regex Tester</h1>
+        <p>Live regex testing with match highlighting and group capture.</p>
+      </div>
+      <div class="field">
+        <div class="regex-input-row">
+          <div>
+            <label for="regex-pattern">Pattern</label>
+            <input type="text" id="regex-pattern" placeholder="e.g. (\w+)@(\w+\.\w+)" oninput="runRegex()">
+          </div>
+          <div>
+            <label for="regex-flags">Flags</label>
+            <input type="text" id="regex-flags" value="g" maxlength="10" style="font-family:var(--font-mono)" oninput="runRegex()">
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="regex-input">Test String</label>
+        <textarea id="regex-input" rows="6" placeholder="Enter text to test..." oninput="runRegex()"></textarea>
+      </div>
+      <div class="regex-matches" id="regex-matches"></div>
+      <div class="output-header" style="margin-top:var(--space-4)">
+        <label>Highlighted Output</label>
+      </div>
+      <div class="output" id="regex-output" style="font-family:var(--font-mono);line-height:1.8"></div>
+      <div style="margin-top:var(--space-4)">
+        <label>Groups and Captures</label>
+        <div class="output" id="regex-groups"></div>
+      </div>
+    </div>
+
+    <!-- Color Converter -->
+    <div class="tool" id="tool-color">
+      <div class="tool-header">
+        <h1>Color Converter</h1>
+        <p>Convert between HEX, RGB, HSL, and OKLCH.</p>
+      </div>
+      <div class="color-preview" id="color-preview" style="background:#3b82f6"></div>
+      <div class="color-values">
+        <div class="color-value-item">
+          <label>HEX</label>
+          <input type="text" id="color-hex" value="#3b82f6" oninput="convertFromHex(this.value)" placeholder="#rrggbb">
+        </div>
+        <div class="color-value-item">
+          <label>RGB</label>
+          <input type="text" id="color-rgb" value="rgb(59, 130, 246)" oninput="convertFromRGB(this.value)" placeholder="rgb(r, g, b)">
+        </div>
+        <div class="color-value-item">
+          <label>HSL</label>
+          <input type="text" id="color-hsl" value="hsl(217, 91%, 60%)" oninput="convertFromHSL(this.value)" placeholder="hsl(h, s%, l%)">
+        </div>
+        <div class="color-value-item">
+          <label>OKLCH</label>
+          <input type="text" id="color-oklch" readonly placeholder="oklch(l c h)" style="color:var(--text-muted)">
+        </div>
+      </div>
+      <div class="field" style="margin-top:var(--space-4)">
+        <label>Pick a color</label>
+        <input type="color" id="color-picker" value="#3b82f6" oninput="convertFromHex(this.value)" style="width:60px;height:40px;cursor:pointer;border-radius:var(--radius-md);border:1px solid var(--border);background:transparent;padding:2px">
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+  const t = document.querySelector('[data-theme-toggle]');
+  const r = document.documentElement;
+  let d = matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light';
+  r.setAttribute('data-theme', d);
+  const moonIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  const sunIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+  t.innerHTML = d === 'dark' ? sunIcon : moonIcon;
+  t.addEventListener('click', () => {
+    d = d === 'dark' ? 'light' : 'dark';
+    r.setAttribute('data-theme', d);
+    t.innerHTML = d === 'dark' ? sunIcon : moonIcon;
+  });
+})();
+
+function switchTool(id, btn) {
+  document.querySelectorAll('.tool').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(el => el.classList.remove('active'));
+  document.getElementById('tool-' + id).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('nav').classList.remove('open');
+}
+
+function copyOutput(id, btn) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+  });
+}
+function clearTool(inputId, outputId) {
+  document.getElementById(inputId).value = '';
+  document.getElementById(outputId).textContent = '';
+  document.getElementById(outputId).className = 'output';
+}
+
+// JWT
+function decodeJWT() {
+  const token = document.getElementById('jwt-input').value.trim();
+  const out = document.getElementById('jwt-output');
+  const err = document.getElementById('jwt-error');
+  if (!token) { out.style.display='none'; err.style.display='none'; return; }
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) throw new Error('Invalid JWT: expected 3 parts separated by dots');
+    const decode = str => JSON.parse(atob(str.replace(/-/g,'+').replace(/_/g,'/')));
+    const header = decode(parts[0]);
+    const payload = decode(parts[1]);
+    document.getElementById('jwt-header').textContent = JSON.stringify(header, null, 2);
+    document.getElementById('jwt-payload').textContent = JSON.stringify(payload, null, 2);
+    const expBox = document.getElementById('jwt-expiry-box');
+    if (payload.exp) {
+      const expDate = new Date(payload.exp * 1000);
+      const isValid = expDate > new Date();
+      expBox.innerHTML = `<div class="jwt-expiry ${isValid ? 'valid' : 'expired'}">${isValid ? 'Valid' : 'Expired'} — exp: ${expDate.toLocaleString()}</div>`;
+    } else {
+      expBox.innerHTML = '<div class="jwt-expiry" style="background:var(--surface-offset);color:var(--text-muted)">No expiry claim (exp) found</div>';
+    }
+    out.style.display = 'block'; err.style.display = 'none';
+  } catch(e) {
+    err.textContent = e.message; err.style.display = 'block'; out.style.display = 'none';
+  }
+}
+
+// Base64
+function b64encode() {
+  const v = document.getElementById('b64-input').value;
+  try { document.getElementById('b64-output').textContent = btoa(unescape(encodeURIComponent(v))); }
+  catch(e) { document.getElementById('b64-output').textContent = 'Error: ' + e.message; }
+}
+function b64decode() {
+  const v = document.getElementById('b64-input').value.trim();
+  try { document.getElementById('b64-output').textContent = decodeURIComponent(escape(atob(v))); }
+  catch(e) { document.getElementById('b64-output').textContent = 'Error: invalid Base64'; }
+}
+function swapB64() {
+  const out = document.getElementById('b64-output').textContent;
+  if (out) document.getElementById('b64-input').value = out;
+}
+
+// URL
+function urlEncode() {
+  document.getElementById('url-output').textContent = encodeURIComponent(document.getElementById('url-input').value);
+}
+function urlDecode() {
+  try { document.getElementById('url-output').textContent = decodeURIComponent(document.getElementById('url-input').value); }
+  catch(e) { document.getElementById('url-output').textContent = 'Error: malformed URI'; }
+}
+function swapURL() {
+  const out = document.getElementById('url-output').textContent;
+  if (out) document.getElementById('url-input').value = out;
+}
+
+// Hash
+async function runHash() {
+  const text = document.getElementById('hash-input').value;
+  const container = document.getElementById('hash-results');
+  if (!text) { container.innerHTML = ''; return; }
+  const algos = [
+    { id: 'hash-256', name: 'SHA-256', algo: 'SHA-256' },
+    { id: 'hash-384', name: 'SHA-384', algo: 'SHA-384' },
+    { id: 'hash-512', name: 'SHA-512', algo: 'SHA-512' },
+  ];
+  const enc = new TextEncoder();
+  let html = '';
+  for (const a of algos) {
+    if (!document.getElementById(a.id).checked) continue;
+    const buf = await crypto.subtle.digest(a.algo, enc.encode(text));
+    const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+    html += `<div class="output-header"><label>${a.name}</label><button class="copy-btn" onclick="navigator.clipboard.writeText(this.parentElement.nextElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)">Copy</button></div><div class="output" style="margin-bottom:var(--space-4)">${hex}</div>`;
+  }
+  container.innerHTML = html || '<p style="color:var(--text-muted);font-size:var(--text-sm)">Select at least one algorithm.</p>';
+}
+document.getElementById('hash-input').addEventListener('input', runHash);
+
+// JSON
+function liveValidateJSON() {
+  const v = document.getElementById('json-input').value.trim();
+  const out = document.getElementById('json-output');
+  if (!v) { out.textContent = ''; out.className = 'output'; return; }
+  try { JSON.parse(v); out.textContent = 'Valid JSON'; out.className = 'output success'; }
+  catch(e) { out.textContent = 'Invalid: ' + e.message; out.className = 'output error'; }
+}
+function formatJSON() {
+  const out = document.getElementById('json-output');
+  try {
+    const parsed = JSON.parse(document.getElementById('json-input').value);
+    out.textContent = JSON.stringify(parsed, null, 2);
+    out.className = 'output';
+  } catch(e) { out.textContent = 'Error: ' + e.message; out.className = 'output error'; }
+}
+function minifyJSON() {
+  const out = document.getElementById('json-output');
+  try {
+    const parsed = JSON.parse(document.getElementById('json-input').value);
+    out.textContent = JSON.stringify(parsed);
+    out.className = 'output';
+  } catch(e) { out.textContent = 'Error: ' + e.message; out.className = 'output error'; }
+}
+
+// Diff (LCS)
+function lcs(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({length: m+1}, () => new Array(n+1).fill(0));
+  for (let i=1;i<=m;i++) for (let j=1;j<=n;j++)
+    dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1]+1 : Math.max(dp[i-1][j],dp[i][j-1]);
+  const result = [];
+  let i=m, j=n;
+  while (i>0||j>0) {
+    if (i>0&&j>0&&a[i-1]===b[j-1]) { result.unshift({type:'same',val:a[i-1]}); i--;j--; }
+    else if (j>0&&(i===0||dp[i][j-1]>=dp[i-1][j])) { result.unshift({type:'added',val:b[j-1]}); j--; }
+    else { result.unshift({type:'removed',val:a[i-1]}); i--; }
+  }
+  return result;
+}
+function runDiff() {
+  const a = document.getElementById('diff-a').value.split('\n');
+  const b = document.getElementById('diff-b').value.split('\n');
+  const diff = lcs(a, b);
+  const out = document.getElementById('diff-output');
+  out.innerHTML = diff.map(d => {
+    const cls = d.type==='added'?'added':d.type==='removed'?'removed':'unchanged';
+    const prefix = d.type==='added'?'+ ':d.type==='removed'?'- ':'  ';
+    return `<div class="diff-line ${cls}">${prefix}${d.val.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+  }).join('');
+}
+
+// UUID
+function uuidV4() {
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
+}
+function uuidV7() {
+  const ts = Date.now();
+  const tsHex = ts.toString(16).padStart(12,'0');
+  const rand = Array.from(crypto.getRandomValues(new Uint8Array(10))).map(b=>b.toString(16).padStart(2,'0')).join('');
+  const ver = (parseInt(rand[0],16) & 0x0f | 0x70).toString(16);
+  const var_ = (parseInt(rand[2],16) & 0x3f | 0x80).toString(16);
+  return `${tsHex.slice(0,8)}-${tsHex.slice(8,12)}-${ver}${rand[1]}-${var_}${rand[3]}-${rand.slice(4,16)}`;
+}
+function generateUUIDs() {
+  const type = document.getElementById('uuid-type').value;
+  const count = Math.min(50, Math.max(1, parseInt(document.getElementById('uuid-count').value)||1));
+  const list = document.getElementById('uuid-list');
+  list.innerHTML = '';
+  for (let i=0;i<count;i++) {
+    const id = type==='v4' ? uuidV4() : uuidV7();
+    list.innerHTML += `<div class="uuid-item">${id}<button class="copy-btn" onclick="navigator.clipboard.writeText('${id}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)">Copy</button></div>`;
+  }
+}
+function copyAllUUIDs() {
+  const ids = Array.from(document.querySelectorAll('.uuid-item')).map(el => el.firstChild.textContent.trim());
+  if (ids.length) navigator.clipboard.writeText(ids.join('\n'));
+}
+generateUUIDs();
+
+// Regex
+function runRegex() {
+  const pattern = document.getElementById('regex-pattern').value;
+  const flags = document.getElementById('regex-flags').value.replace(/[^gimsuy]/g,'');
+  const input = document.getElementById('regex-input').value;
+  const matchInfo = document.getElementById('regex-matches');
+  const out = document.getElementById('regex-output');
+  const groups = document.getElementById('regex-groups');
+  if (!pattern) { out.innerHTML = input; matchInfo.textContent = ''; groups.textContent = ''; return; }
+  try {
+    const allMatches = [...input.matchAll(new RegExp(pattern, flags.includes('g')?flags:flags+'g'))];
+    matchInfo.textContent = allMatches.length ? `${allMatches.length} match${allMatches.length>1?'es':''} found` : 'No matches';
+    let highlighted = '';
+    let last = 0;
+    for (const m of allMatches) {
+      const start = m.index, end = start + m[0].length;
+      highlighted += input.slice(last,start).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+      highlighted += `<mark class="regex-match">${m[0].replace(/&/g,'&amp;').replace(/</g,'&lt;')}</mark>`;
+      last = end;
+    }
+    highlighted += input.slice(last).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    out.innerHTML = highlighted || input.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    if (allMatches.length) {
+      const groupData = allMatches.map((m,i) => {
+        const named = m.groups ? JSON.stringify(m.groups) : 'none';
+        const captured = m.slice(1).map((g,j)=>`  group ${j+1}: ${g!==undefined?g:'undefined'}`).join('\n');
+        return `Match ${i+1}: "${m[0]}"\n${captured || '  no groups'}\n  named: ${named}`;
+      }).join('\n\n');
+      groups.textContent = groupData;
+    } else { groups.textContent = ''; }
+    out.className = 'output';
+  } catch(e) {
+    out.className = 'output error';
+    out.textContent = 'Invalid regex: ' + e.message;
+    groups.textContent = '';
+    matchInfo.textContent = '';
+  }
+}
+
+// Color Converter
+function hexToRgb(hex) {
+  const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return r ? [parseInt(r[1],16),parseInt(r[2],16),parseInt(r[3],16)] : null;
+}
+function rgbToHsl(r,g,b) {
+  r/=255;g/=255;b/=255;
+  const max=Math.max(r,g,b),min=Math.min(r,g,b);
+  let h,s,l=(max+min)/2;
+  if(max===min){h=s=0;}else{
+    const d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);
+    switch(max){case r:h=((g-b)/d+(g<b?6:0))/6;break;case g:h=((b-r)/d+2)/6;break;case b:h=((r-g)/d+4)/6;break;}
+  }
+  return [Math.round(h*360),Math.round(s*100),Math.round(l*100)];
+}
+function rgbToOklch(r,g,b) {
+  const lin = v => { v/=255; return v<=0.04045?v/12.92:Math.pow((v+0.055)/1.055,2.4); };
+  const [lr,lg,lb] = [lin(r),lin(g),lin(b)];
+  const l_=Math.cbrt(0.4122214708*lr+0.5363325363*lg+0.0514459929*lb);
+  const m_=Math.cbrt(0.2119034982*lr+0.6806995451*lg+0.1073969566*lb);
+  const s_=Math.cbrt(0.0883024619*lr+0.2817188376*lg+0.6299787005*lb);
+  const L=0.2104542553*l_+0.7936177850*m_-0.0040720468*s_;
+  const A=1.9779984951*l_-2.4285922050*m_+0.4505937099*s_;
+  const B=0.0259040371*l_+0.7827717662*m_-0.8086757660*s_;
+  const C=Math.sqrt(A*A+B*B);
+  const H=(Math.atan2(B,A)*180/Math.PI+360)%360;
+  return [L.toFixed(3),C.toFixed(3),H.toFixed(1)];
+}
+function updateColorOutputs(r,g,b) {
+  const hex = '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+  const [h,s,l] = rgbToHsl(r,g,b);
+  const [ol,oc,oh] = rgbToOklch(r,g,b);
+  document.getElementById('color-hex').value = hex;
+  document.getElementById('color-rgb').value = `rgb(${r}, ${g}, ${b})`;
+  document.getElementById('color-hsl').value = `hsl(${h}, ${s}%, ${l}%)`;
+  document.getElementById('color-oklch').value = `oklch(${ol} ${oc} ${oh})`;
+  document.getElementById('color-preview').style.background = hex;
+  document.getElementById('color-picker').value = hex;
+}
+function convertFromHex(hex) {
+  const rgb = hexToRgb(hex);
+  if (rgb) updateColorOutputs(...rgb);
+}
+function convertFromRGB(str) {
+  const m = str.match(/rgb[a]?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+  if (m) updateColorOutputs(+m[1],+m[2],+m[3]);
+}
+function hslToRgb(h,s,l) {
+  s/=100;l/=100;
+  const a=s*Math.min(l,1-l);
+  const f=n=>{const k=(n+h/30)%12;return l-a*Math.max(Math.min(k-3,9-k,1),-1);};
+  return [Math.round(f(0)*255),Math.round(f(8)*255),Math.round(f(4)*255)];
+}
+function convertFromHSL(str) {
+  const m = str.match(/hsl[a]?\(\s*([\d.]+)\s*,\s*([\d.]+)%?\s*,\s*([\d.]+)%?/i);
+  if (m) updateColorOutputs(...hslToRgb(+m[1],+m[2],+m[3]));
+}
+</script>
+</body>
+</html>
